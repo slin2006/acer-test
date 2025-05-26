@@ -140,7 +140,6 @@ def train(rank, args, T, shared_model, shared_average_model, optimiser):
   torch.manual_seed(args.seed + rank)
 
   env = gym.make(args.env)
-  env.seed(args.seed + rank)
   model = ActorCritic(env.observation_space, env.action_space, args.hidden_size)
   model.train()
 
@@ -150,6 +149,7 @@ def train(rank, args, T, shared_model, shared_average_model, optimiser):
 
   t = 1  # Thread step counter
   done = True  # Start new episode
+  first_reset_done = False
 
   while T.value() <= args.T_max:
     # On-policy episode loop
@@ -164,7 +164,11 @@ def train(rank, args, T, shared_model, shared_average_model, optimiser):
         hx, avg_hx = torch.zeros(1, args.hidden_size), torch.zeros(1, args.hidden_size)
         cx, avg_cx = torch.zeros(1, args.hidden_size), torch.zeros(1, args.hidden_size)
         # Reset environment and done flag
-        state = state_to_tensor(env.reset())
+        if not first_reset_done:
+            state = state_to_tensor(env.reset(seed=args.seed + rank))
+            first_reset_done = True
+        else:
+            state = state_to_tensor(env.reset())
         done, episode_length = False, 0
       else:
         # Perform truncated backpropagation-through-time (allows freeing buffers after backwards call)

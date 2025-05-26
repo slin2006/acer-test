@@ -4,3 +4,5 @@ torch==1.13.1
 plotly
 # OpenAI Gym for environments
 gym==0.26.2
+# NumPy version constraint for compatibility
+numpy<2.0
