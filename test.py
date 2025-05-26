@@ -58,7 +58,7 @@ def test(rank, args, T, shared_model):
             policy, _, _, (hx, cx) = model(state, (hx, cx))
 
           # Choose action greedily
-          action = policy.max(1)[1][0]
+          action = policy.max(dim=1)[1][0]
 
           # Step
           state, reward, done, _ = env.step(action.item())

@@ -1,8 +1,11 @@
 name: acer
 channels:
   - pytorch
+  - conda-forge
 dependencies:
+  - python=3.9.17
   - plotly
-  - pytorch
+  - pytorch=1.13.1
+  - cpuonly
   - pip:
-    - gym
+    - gym==0.26.2

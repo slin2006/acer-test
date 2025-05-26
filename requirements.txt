@@ -1,0 +1,6 @@
+# PyTorch (CPU version)
+torch==1.13.1
+# Plotting library
+plotly
+# OpenAI Gym for environments
+gym==0.26.2

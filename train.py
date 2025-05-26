@@ -60,11 +60,11 @@ def _update_networks(args, T, model, shared_model, shared_average_model, loss, o
 # Computes an "efficient trust region" loss (policy head only) based on an existing loss and two distributions
 def _trust_region_loss(model, distribution, ref_distribution, loss, threshold, g, k):
 
-  kl = - (ref_distribution * (distribution.log()-ref_distribution.log())).sum(1).mean(0)
+  kl = - (ref_distribution * (distribution.log()-ref_distribution.log())).sum(dim=1).mean(dim=0)
 
   # Compute dot products of gradients
-  k_dot_g = (k*g).sum(1).mean(0)
-  k_dot_k = (k**2).sum(1).mean(0)
+  k_dot_g = (k*g).sum(dim=1).mean(dim=0)
+  k_dot_k = (k**2).sum(dim=1).mean(dim=0)
   # Compute trust region update
   if k_dot_k.item() > 0:
     trust_factor = ((k_dot_g - threshold) / k_dot_k).clamp(min=0).detach()
@@ -97,37 +97,37 @@ def _train(args, T, model, shared_model, shared_average_model, optimiser, polici
     A = Qret - Vs[i]
 
     # Log policy log(π(a_i|s_i; θ))
-    log_prob = policies[i].gather(1, actions[i]).log()
+    log_prob = policies[i].gather(dim=1, index=actions[i]).log()
     # g ← min(c, ρ_a_i)∙∇θ∙log(π(a_i|s_i; θ))∙A
-    single_step_policy_loss = -(rho.gather(1, actions[i]).clamp(max=args.trace_max) * log_prob * A.detach()).mean(0)  # Average over batch
+    single_step_policy_loss = -(rho.gather(dim=1, index=actions[i]).clamp(max=args.trace_max) * log_prob * A.detach()).mean(dim=0)  # Average over batch
     # Off-policy bias correction
     if off_policy:
       # g ← g + Σ_a [1 - c/ρ_a]_+∙π(a|s_i; θ)∙∇θ∙log(π(a|s_i; θ))∙(Q(s_i, a; θ) - V(s_i; θ)
       bias_weight = (1 - args.trace_max / rho).clamp(min=0) * policies[i]
-      single_step_policy_loss -= (bias_weight * policies[i].log() * (Qs[i].detach() - Vs[i].expand_as(Qs[i]).detach())).sum(1).mean(0)
+      single_step_policy_loss -= (bias_weight * policies[i].log() * (Qs[i].detach() - Vs[i].expand_as(Qs[i]).detach())).sum(dim=1).mean(dim=0)
     if args.trust_region:
       # KL divergence k ← ∇θ0∙DKL[π(∙|s_i; θ_a) || π(∙|s_i; θ)]
-      k = -average_policies[i].gather(1, actions[i]) / (policies[i].gather(1, actions[i]) + 1e-10)
+      k = -average_policies[i].gather(dim=1, index=actions[i]) / (policies[i].gather(dim=1, index=actions[i]) + 1e-10)
       if off_policy:
-        g = (rho.gather(1, actions[i]).clamp(max=args.trace_max) * A / (policies[i] + 1e-10).gather(1, actions[i]) \
-          + (bias_weight * (Qs[i] - Vs[i].expand_as(Qs[i]))/(policies[i] + 1e-10)).sum(1)).detach()
+        g = (rho.gather(dim=1, index=actions[i]).clamp(max=args.trace_max) * A / (policies[i] + 1e-10).gather(dim=1, index=actions[i]) \
+          + (bias_weight * (Qs[i] - Vs[i].expand_as(Qs[i]))/(policies[i] + 1e-10)).sum(dim=1)).detach()
       else:
-        g = (rho.gather(1, actions[i]).clamp(max=args.trace_max) * A / (policies[i] + 1e-10).gather(1, actions[i])).detach()
+        g = (rho.gather(dim=1, index=actions[i]).clamp(max=args.trace_max) * A / (policies[i] + 1e-10).gather(dim=1, index=actions[i])).detach()
       # Policy update dθ ← dθ + ∂θ/∂θ∙z*
-      policy_loss += _trust_region_loss(model, policies[i].gather(1, actions[i]) + 1e-10, average_policies[i].gather(1, actions[i]) + 1e-10, single_step_policy_loss, args.trust_region_threshold, g, k)
+      policy_loss += _trust_region_loss(model, policies[i].gather(dim=1, index=actions[i]) + 1e-10, average_policies[i].gather(dim=1, index=actions[i]) + 1e-10, single_step_policy_loss, args.trust_region_threshold, g, k)
     else:
       # Policy update dθ ← dθ + ∂θ/∂θ∙g
       policy_loss += single_step_policy_loss
 
     # Entropy regularisation dθ ← dθ + β∙∇θH(π(s_i; θ))
-    policy_loss -= args.entropy_weight * -(policies[i].log() * policies[i]).sum(1).mean(0)  # Sum over probabilities, average over batch
+    policy_loss -= args.entropy_weight * -(policies[i].log() * policies[i]).sum(dim=1).mean(dim=0)  # Sum over probabilities, average over batch
 
     # Value update dθ ← dθ - ∇θ∙1/2∙(Qret - Q(s_i, a_i; θ))^2
-    Q = Qs[i].gather(1, actions[i])
-    value_loss += ((Qret - Q) ** 2 / 2).mean(0)  # Least squares loss
+    Q = Qs[i].gather(dim=1, index=actions[i])
+    value_loss += ((Qret - Q) ** 2 / 2).mean(dim=0)  # Least squares loss
 
     # Truncated importance weight ρ¯_a_i = min(1, ρ_a_i)
-    truncated_rho = rho.gather(1, actions[i]).clamp(max=1)
+    truncated_rho = rho.gather(dim=1, index=actions[i]).clamp(max=1)
     # Qret ← ρ¯_a_i∙(Qret - Q(s_i, a_i; θ)) + V(s_i; θ)
     Qret = truncated_rho * (Qret - Q.detach()) + Vs[i].detach()
 
@@ -185,7 +185,7 @@ def train(rank, args, T, shared_model, shared_average_model, optimiser):
         # Step
         next_state, reward, done, _ = env.step(action.item())
         next_state = state_to_tensor(next_state)
-        reward = args.reward_clip and min(max(reward, -1), 1) or reward  # Optionally clamp rewards
+        reward = min(max(reward, -1), 1) if args.reward_clip else reward  # Optionally clamp rewards
         done = done or episode_length >= args.max_episode_length  # Stop episodes at a max length
         episode_length += 1  # Increase episode counter
 
