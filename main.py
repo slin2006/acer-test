@@ -92,7 +92,7 @@ if __name__ == '__main__':
   env.close()
 
   fields = ['t', 'rewards', 'avg_steps', 'time']
-  with open(os.path.join(save_dir, 'test_results.csv'), 'w') as f:
+  with open(os.path.join(save_dir, 'results.csv'), 'w') as f:
     writer = csv.writer(f)
     writer.writerow(fields)
   # Start validation agent
