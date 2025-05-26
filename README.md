@@ -20,19 +20,6 @@ Results
 
 ![ACER](figures/acer.png)
 
-Acknowledgements
-----------------
-
-- [@ikostrikov](https://github.com/ikostrikov) for [pytorch-a3c](https://github.com/ikostrikov/pytorch-a3c)
-- [@apaszke](https://github.com/apaszke) for [Reinforcement Learning (DQN) tutorial](http://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html)
-- [@pfnet](https://github.com/pfnet) for [ChainerRL](https://github.com/pfnet/chainerrl)
-
-References
-----------
-
-[1] [Sample Efficient Actor-Critic with Experience Replay](https://arxiv.org/abs/1611.01224)  
-[2] [Asynchronous Methods for Deep Reinforcement Learning](https://arxiv.org/abs/1602.01783)  
-
 ## Setup and Execution (Python 3.9 with Pyenv)
 
 This project is intended to be run with Python 3.9.17. We recommend using `pyenv` to manage Python versions and `pyenv-virtualenv` for creating isolated environments.
@@ -76,3 +63,30 @@ Refer to the arguments in `main.py` for more options:
 ```bash
 python main.py --help
 ```
+
+### Running from a Jupyter Notebook
+
+For users who prefer to work from a Jupyter Notebook, `run_acer_from_notebook.ipynb` is available in the root of this repository.
+This notebook provides a convenient way to:
+- Launch training runs of `main.py` with specified arguments.
+- See the script's output directly in the notebook.
+- Get instructions on finding and viewing the generated `rewards.html` plot.
+
+To use it:
+1. Ensure you have Jupyter Notebook or JupyterLab installed in your Python environment (`pip install notebook` or `pip install jupyterlab`).
+2. Activate your `pyenv` virtual environment (e.g., `acer-env`) where you've installed the project dependencies.
+3. Launch Jupyter Notebook/Lab from your terminal: `jupyter notebook` or `jupyter lab`.
+4. Open `run_acer_from_notebook.ipynb` and execute the cells.
+
+Acknowledgements
+----------------
+
+- [@ikostrikov](https://github.com/ikostrikov) for [pytorch-a3c](https://github.com/ikostrikov/pytorch-a3c)
+- [@apaszke](https://github.com/apaszke) for [Reinforcement Learning (DQN) tutorial](http://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html)
+- [@pfnet](https://github.com/pfnet) for [ChainerRL](https://github.com/pfnet/chainerrl)
+
+References
+----------
+
+[1] [Sample Efficient Actor-Critic with Experience Replay](https://arxiv.org/abs/1611.01224)  
+[2] [Asynchronous Methods for Deep Reinforcement Learning](https://arxiv.org/abs/1602.01783)
