@@ -6,3 +6,6 @@ plotly
 gym==0.26.2
 # NumPy version constraint for compatibility
 numpy<2.0
+# For reading CSV and plotting in notebook
+pandas
+matplotlib
