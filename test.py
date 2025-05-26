@@ -15,7 +15,6 @@ def test(rank, args, T, shared_model):
   torch.manual_seed(args.seed + rank)
 
   env = gym.make(args.env)
-  env.seed(args.seed + rank)
   model = ActorCritic(env.observation_space, env.action_space, args.hidden_size)
   model.eval()
 
@@ -36,6 +35,7 @@ def test(rank, args, T, shared_model):
 
       # Evaluate over several episodes and average results
       avg_rewards, avg_episode_lengths = [], []
+      first_reset_done_for_this_evaluation_batch = False # Flag for this batch of episodes
       for _ in range(args.evaluation_episodes):
         while True:
           # Reset or pass on hidden state
@@ -45,7 +45,11 @@ def test(rank, args, T, shared_model):
             hx = torch.zeros(1, args.hidden_size)
             cx = torch.zeros(1, args.hidden_size)
             # Reset environment and done flag
-            state = state_to_tensor(env.reset())
+            if not first_reset_done_for_this_evaluation_batch:
+                state = state_to_tensor(env.reset(seed=args.seed + rank))
+                first_reset_done_for_this_evaluation_batch = True
+            else:
+                state = state_to_tensor(env.reset())
             done, episode_length = False, 0
             reward_sum = 0
 
