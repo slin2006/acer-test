@@ -5,7 +5,7 @@ from torch.nn import functional as F
 
 class ActorCritic(nn.Module):
   def __init__(self, observation_space, action_space, hidden_size):
-    super(ActorCritic, self).__init__()
+    super().__init__()
     self.state_size = observation_space.shape[0]
     self.action_size = action_space.n
 
@@ -20,5 +20,5 @@ class ActorCritic(nn.Module):
     x = h[0]
     policy = F.softmax(self.fc_actor(x), dim=1).clamp(max=1 - 1e-20)  # Prevent 1s and hence NaNs
     Q = self.fc_critic(x)
-    V = (Q * policy).sum(1, keepdim=True)  # V is expectation of Q under π
+    V = (Q * policy).sum(dim=1, keepdim=True)  # V is expectation of Q under π
     return policy, Q, V, h

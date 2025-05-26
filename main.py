@@ -52,6 +52,9 @@ if __name__ == '__main__':
   os.environ['OMP_NUM_THREADS'] = '1'
   os.environ['MKL_NUM_THREADS'] = '1'
 
+  # Force true spawning (not forking) if available
+  mp.set_start_method('spawn', force=True)
+
   # Setup
   args = parser.parse_args()
   # Creating directories.
@@ -66,7 +69,6 @@ if __name__ == '__main__':
       print(' ' * 26 + k + ': ' + str(v))
       f.write(k + ' : ' + str(v) + '\n')
   # args.env = 'CartPole-v1'  # TODO: Remove hardcoded environment when code is more adaptable
-  # mp.set_start_method(platform.python_version()[0] == '3' and 'spawn' or 'fork')  # Force true spawning (not forking) if available
   torch.manual_seed(args.seed)
   T = Counter()  # Global shared counter
   gym.logger.set_level(gym.logger.ERROR)  # Disable Gym warnings
