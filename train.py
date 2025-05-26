@@ -165,10 +165,12 @@ def train(rank, args, T, shared_model, shared_average_model, optimiser):
         cx, avg_cx = torch.zeros(1, args.hidden_size), torch.zeros(1, args.hidden_size)
         # Reset environment and done flag
         if not first_reset_done:
-            state = state_to_tensor(env.reset(seed=args.seed + rank))
+            observation, info = env.reset(seed=args.seed + rank)
+            state = state_to_tensor(observation)
             first_reset_done = True
         else:
-            state = state_to_tensor(env.reset())
+            observation, info = env.reset()
+            state = state_to_tensor(observation)
         done, episode_length = False, 0
       else:
         # Perform truncated backpropagation-through-time (allows freeing buffers after backwards call)
@@ -187,10 +189,13 @@ def train(rank, args, T, shared_model, shared_average_model, optimiser):
         action = torch.multinomial(policy, 1)[0, 0]
 
         # Step
-        next_state, reward, done, _ = env.step(action.item())
-        next_state = state_to_tensor(next_state)
+        next_observation, reward, terminated, truncated, info = env.step(action.item())
+        next_state = state_to_tensor(next_observation)
         reward = min(max(reward, -1), 1) if args.reward_clip else reward  # Optionally clamp rewards
-        done = done or episode_length >= args.max_episode_length  # Stop episodes at a max length
+        # Original 'done' condition related to max_episode_length needs to be preserved
+        # and combined with 'terminated' or 'truncated'
+        current_done_by_api = terminated or truncated 
+        done = current_done_by_api or episode_length >= args.max_episode_length  # Stop episodes at a max length
         episode_length += 1  # Increase episode counter
 
         if not args.on_policy:

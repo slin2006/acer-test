@@ -46,10 +46,12 @@ def test(rank, args, T, shared_model):
             cx = torch.zeros(1, args.hidden_size)
             # Reset environment and done flag
             if not first_reset_done_for_this_evaluation_batch:
-                state = state_to_tensor(env.reset(seed=args.seed + rank))
+                observation, info = env.reset(seed=args.seed + rank)
+                state = state_to_tensor(observation)
                 first_reset_done_for_this_evaluation_batch = True
             else:
-                state = state_to_tensor(env.reset())
+                observation, info = env.reset()
+                state = state_to_tensor(observation)
             done, episode_length = False, 0
             reward_sum = 0
 
@@ -65,10 +67,13 @@ def test(rank, args, T, shared_model):
           action = policy.max(dim=1)[1][0]
 
           # Step
-          state, reward, done, _ = env.step(action.item())
-          state = state_to_tensor(state)
+          observation, reward, terminated, truncated, info = env.step(action.item())
+          state = state_to_tensor(observation) # Update to use the new observation variable
           reward_sum += reward
-          done = done or episode_length >= args.max_episode_length  # Stop episodes at a max length
+          # Original 'done' condition related to max_episode_length needs to be preserved
+          # and combined with 'terminated' or 'truncated'
+          current_done_by_api = terminated or truncated
+          done = current_done_by_api or episode_length >= args.max_episode_length  # Stop episodes at a max length
           episode_length += 1  # Increase episode counter
 
           # Log and reset statistics at the end of every episode
